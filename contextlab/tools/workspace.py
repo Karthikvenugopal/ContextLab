@@ -22,7 +22,14 @@ class RepositoryWorkspace:
         target = Path(tempfile.mkdtemp(prefix="contextlab-workspace-"))
         try:
             subprocess.run(
-                ["git", "clone", "--quiet", "--no-hardlinks", str(repository.resolve()), str(target)],
+                [
+                    "git",
+                    "clone",
+                    "--quiet",
+                    "--no-hardlinks",
+                    str(repository.resolve()),
+                    str(target),
+                ],
                 check=True,
                 capture_output=True,
                 text=True,

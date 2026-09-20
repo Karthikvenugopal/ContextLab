@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any, Literal
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class EventKind(str, Enum):
+class EventKind(StrEnum):
     INFERENCE_REQUEST = "inference_request"
     INFERENCE_RESPONSE = "inference_response"
     TOOL_CALL = "tool_call"
@@ -33,7 +33,7 @@ class Message(BaseModel):
 class AgentEvent(BaseModel):
     model_config = ConfigDict(extra="forbid")
     id: str = Field(default_factory=lambda: uuid4().hex)
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     kind: EventKind
     step: int
     experiment_id: str

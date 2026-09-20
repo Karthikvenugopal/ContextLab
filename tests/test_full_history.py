@@ -2,8 +2,7 @@ import pytest
 
 from contextlab.agent.models import AgentState, Message
 from contextlab.config import BudgetConfig
-from contextlab.context.budgeting import TokenBudget
-from contextlab.context.budgeting import ContextOverflow
+from contextlab.context.budgeting import ContextOverflow, TokenBudget
 from contextlab.context.policies.full_history import FullHistoryPolicy
 
 

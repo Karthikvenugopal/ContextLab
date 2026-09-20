@@ -10,7 +10,6 @@ from typing import Any
 
 from contextlab.agent.models import AgentEvent
 
-
 SENSITIVE_KEYS = {"content", "prompt", "response", "task_instruction"}
 
 

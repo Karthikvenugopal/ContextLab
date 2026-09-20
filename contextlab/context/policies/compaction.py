@@ -8,7 +8,12 @@ from typing import Protocol
 from pydantic import BaseModel, Field
 
 from contextlab.agent.models import AgentEvent, AgentState, EventKind, Message
-from contextlab.context.base import BaseContextPolicy, ContextAudit, PreparedContext, TokenBudgetLike
+from contextlab.context.base import (
+    BaseContextPolicy,
+    ContextAudit,
+    PreparedContext,
+    TokenBudgetLike,
+)
 from contextlab.context.budgeting import ContextOverflow
 from contextlab.inference.client import InferenceClient, InferenceResponse
 
@@ -38,7 +43,10 @@ class CompactionTriggers(BaseModel):
             reasons.append("utilization")
         if self.every_steps is not None and state.step - last_compaction_step >= self.every_steps:
             reasons.append("agent_steps")
-        if self.tool_output_tokens is not None and accumulated_tool_tokens >= self.tool_output_tokens:
+        if (
+            self.tool_output_tokens is not None
+            and accumulated_tool_tokens >= self.tool_output_tokens
+        ):
             reasons.append("tool_output_volume")
         return reasons
 
@@ -81,7 +89,8 @@ class DeterministicCompactor:
                 "Repository findings: " + (" | ".join(findings[-8:]) or "none"),
                 "Unresolved errors: " + (" | ".join(unresolved[-5:]) or "none"),
                 "Test results: " + (" | ".join(tests[-5:]) or "none"),
-                "Completed actions: represented by the canonical trace; continue from recent messages.",
+                "Completed actions: represented by the canonical trace; continue from "
+                "recent messages.",
                 "Remaining work: satisfy the original task and validate with approved tests.",
             ]
         )
@@ -103,7 +112,8 @@ class ModelCompactor:
             role="user",
             content=(
                 "Create a structured coding-session summary preserving task requirements, current "
-                "objective, repository findings, files modified, unresolved errors, tests, completed "
+                "objective, repository findings, files modified, unresolved errors, tests, "
+                "completed "
                 "actions, and remaining work.\n\n"
                 + "\n\n".join(f"{item.role}/{item.name or ''}: {item.content}" for item in messages)
             ),
@@ -156,9 +166,7 @@ class CompactionPolicy(BaseContextPolicy):
                 {"path": str(path), "step": event.step, "tool_call_id": result.get("call_id")}
             )
 
-    async def prepare_context(
-        self, state: AgentState, budget: TokenBudgetLike
-    ) -> PreparedContext:
+    async def prepare_context(self, state: AgentState, budget: TokenBudgetLike) -> PreparedContext:
         canonical_tokens = budget.count_messages(state.canonical_messages)
         tool_tokens = sum(
             max(1, len(message.content.encode()) // 4)
@@ -172,7 +180,9 @@ class CompactionPolicy(BaseContextPolicy):
             accumulated_tool_tokens=tool_tokens,
             last_compaction_step=self.last_compaction_step,
         )
-        compactable_end = max(self.compacted_until, len(state.canonical_messages) - self.recent_messages)
+        compactable_end = max(
+            self.compacted_until, len(state.canonical_messages) - self.recent_messages
+        )
         compressed: list[int] = []
         if reasons and compactable_end > self.compacted_until:
             compressed = list(range(self.compacted_until, compactable_end))
@@ -180,15 +190,15 @@ class CompactionPolicy(BaseContextPolicy):
                 if event.kind != EventKind.TOOL_RESULT:
                     continue
                 result_payload = event.payload.get("result", {})
-                metadata = result_payload.get("metadata", {}) if isinstance(result_payload, dict) else {}
+                metadata = (
+                    result_payload.get("metadata", {}) if isinstance(result_payload, dict) else {}
+                )
                 if isinstance(metadata, dict) and metadata.get("path"):
                     self.precompaction_paths.add(str(metadata["path"]))
             compact_input = state.canonical_messages[self.compacted_until : compactable_end]
             if self.summary:
                 compact_input = [Message(role="system", content=self.summary), *compact_input]
-            result = await self.compactor.compact(
-                compact_input, state
-            )
+            result = await self.compactor.compact(compact_input, state)
             self.summary = result.summary
             self.compacted_until = compactable_end
             self.last_compaction_step = state.step
@@ -206,9 +216,14 @@ class CompactionPolicy(BaseContextPolicy):
             *range(min(2, len(state.canonical_messages))),
             *range(self.compacted_until, len(state.canonical_messages)),
         ]
-        messages = [state.canonical_messages[index].model_copy(deep=True) for index in retained_indices]
+        messages = [
+            state.canonical_messages[index].model_copy(deep=True) for index in retained_indices
+        ]
         if self.summary:
-            messages.insert(2 if len(messages) >= 2 else len(messages), Message(role="system", content=self.summary))
+            messages.insert(
+                2 if len(messages) >= 2 else len(messages),
+                Message(role="system", content=self.summary),
+            )
         estimated = budget.count_messages(messages)
         if estimated > budget.usable_prompt_tokens:
             raise ContextOverflow(estimated, budget.usable_prompt_tokens)

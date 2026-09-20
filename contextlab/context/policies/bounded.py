@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 from contextlab.agent.models import AgentState, Message
-from contextlab.context.base import BaseContextPolicy, ContextAudit, PreparedContext, TokenBudgetLike
+from contextlab.context.base import (
+    BaseContextPolicy,
+    ContextAudit,
+    PreparedContext,
+    TokenBudgetLike,
+)
 from contextlab.context.budgeting import ContextOverflow
 
 
@@ -15,9 +20,7 @@ class BoundedToolOutputPolicy(BaseContextPolicy):
         self.total_tool_tokens = total_tool_tokens
         self.reductions: list[dict[str, object]] = []
 
-    async def prepare_context(
-        self, state: AgentState, budget: TokenBudgetLike
-    ) -> PreparedContext:
+    async def prepare_context(self, state: AgentState, budget: TokenBudgetLike) -> PreparedContext:
         messages: list[Message] = []
         removed: list[int] = []
         retained: list[int] = []

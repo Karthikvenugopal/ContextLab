@@ -18,6 +18,6 @@ def test_budget_accounts_for_reservations_and_overflow() -> None:
 
 def test_client_and_server_counts_remain_separate() -> None:
     budget = TokenBudget(BudgetConfig(), model="mock")
-    record = budget.record([Message(role="user", content="hello")], server_reported=9)
-    assert record.server_reported == 9
+    record = budget.record([Message(role="user", content="hello")], server_reported=99)
+    assert record.server_reported == 99
     assert record.client_estimate != record.server_reported

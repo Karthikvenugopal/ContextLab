@@ -43,11 +43,17 @@ async def test_agent_completes_real_task_under_each_policy(
         json.dumps(
             {
                 "action": "tool",
-                "tool": {"name": "write_file", "arguments": {"path": "mathlib.py", "content": corrected}},
+                "tool": {
+                    "name": "write_file",
+                    "arguments": {"path": "mathlib.py", "content": corrected},
+                },
             }
         ),
         json.dumps(
-            {"action": "tool", "tool": {"name": "run_command", "arguments": {"argv": ["pytest", "-q"]}}}
+            {
+                "action": "tool",
+                "tool": {"name": "run_command", "arguments": {"argv": ["pytest", "-q"]}},
+            }
         ),
         json.dumps({"action": "finish", "summary": "fixed addition and ran tests"}),
     ]

@@ -25,6 +25,7 @@ dev = [
   "pytest-asyncio>=0.23,<1",
   "pytest-cov>=5,<6",
   "ruff>=0.6,<1",
+  "types-PyYAML>=6.0,<7",
 ]
 
 [project.scripts]
@@ -37,6 +38,7 @@ packages = ["contextlab"]
 addopts = "-q"
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = ["vllm: requires a compatible GPU and running vLLM endpoint"]
 
 [tool.ruff]
 line-length = 100
@@ -51,3 +53,7 @@ strict = true
 packages = ["contextlab"]
 warn_unreachable = true
 plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "yaml"
+ignore_missing_imports = true

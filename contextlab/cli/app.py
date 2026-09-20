@@ -46,7 +46,9 @@ def version() -> None:
 
 @app.command()
 def doctor(
-    endpoint: Annotated[str, typer.Option(help="OpenAI-compatible /v1 endpoint.")] = "http://127.0.0.1:8000/v1",
+    endpoint: Annotated[
+        str, typer.Option(help="OpenAI-compatible /v1 endpoint.")
+    ] = "http://127.0.0.1:8000/v1",
 ) -> None:
     """Diagnose Python, container, GPU, and inference endpoint availability."""
     diagnostics: dict[str, object] = {
@@ -100,7 +102,7 @@ def agent_run(
     experiment = ExperimentConfig(
         experiment_id=f"single-{load_task(task).id}-{policy}",
         tasks=[task.resolve()],
-        policies=[policy],  # type: ignore[list-item]
+        policies=[policy],
         budgets=[
             ContextBudgetVariant(
                 name="medium",

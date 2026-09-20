@@ -38,7 +38,9 @@ def analyze_context_behavior(events: list[AgentEvent]) -> ContextBehavior:
                 continue
             behavior.retained_message_instances += len(audit.get("retained_message_indices", []))
             behavior.removed_message_instances += len(audit.get("removed_message_indices", []))
-            behavior.compressed_message_instances += len(audit.get("compressed_message_indices", []))
+            behavior.compressed_message_instances += len(
+                audit.get("compressed_message_indices", [])
+            )
             behavior.recovered_sources.update(audit.get("recovered_source_ids", []))
             metadata = audit.get("metadata", {})
             reductions = metadata.get("reductions", []) if isinstance(metadata, dict) else []

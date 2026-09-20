@@ -45,7 +45,9 @@ async def test_compaction_request_is_auxiliary_inference_workload() -> None:
     )
     policy = CompactionPolicy(
         compactor=ModelCompactor(FakeInference()),  # type: ignore[arg-type]
-        triggers=CompactionTriggers(every_steps=1, utilization_threshold=None, tool_output_tokens=None),
+        triggers=CompactionTriggers(
+            every_steps=1, utilization_threshold=None, tool_output_tokens=None
+        ),
     )
     await policy.prepare_context(state, TokenBudget(BudgetConfig()))
     record = policy.drain_new_records()[0]

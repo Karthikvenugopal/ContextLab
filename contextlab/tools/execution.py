@@ -31,13 +31,17 @@ class MutationTools:
             content = str(call.arguments["content"])
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content, encoding="utf-8")
+            relative_path = path.relative_to(self.workspace.root)
             return ToolResult(
                 call_id=call.id,
                 name=call.name,
-                content=f"wrote {len(content.encode())} bytes to {path.relative_to(self.workspace.root)}",
+                content=f"wrote {len(content.encode())} bytes to {relative_path}",
                 ok=True,
                 duration_seconds=time.perf_counter() - started,
-                metadata={"path": str(path.relative_to(self.workspace.root)), "bytes": len(content.encode())},
+                metadata={
+                    "path": str(path.relative_to(self.workspace.root)),
+                    "bytes": len(content.encode()),
+                },
             )
         except (KeyError, OSError, WorkspaceError) as error:
             return self._error(call, error, started)
@@ -48,7 +52,9 @@ class MutationTools:
             raw = call.arguments["argv"]
             argv = shlex.split(raw) if isinstance(raw, str) else [str(item) for item in raw]
             if not argv or Path(argv[0]).name not in self.allowed_commands:
-                raise PermissionError(f"command is not allowlisted: {argv[0] if argv else '<empty>'}")
+                raise PermissionError(
+                    f"command is not allowlisted: {argv[0] if argv else '<empty>'}"
+                )
             cwd = self.workspace.resolve(str(call.arguments.get("cwd", ".")))
             if not cwd.is_dir():
                 raise ValueError("command cwd is not a directory")

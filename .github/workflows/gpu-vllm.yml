@@ -1,0 +1,16 @@
+name: GPU vLLM validation
+
+on:
+  workflow_dispatch:
+
+jobs:
+  vllm-integration:
+    runs-on: [self-hosted, linux, gpu]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e ".[dev]"
+      - run: pytest -m vllm
+

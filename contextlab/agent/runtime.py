@@ -19,6 +19,8 @@ from contextlab.tools.repository import RepositoryTools
 class Prepared(Protocol):
     messages: list[Message]
     estimated_tokens: int
+    usable_tokens: int
+    audit: Any
 
 
 class Policy(Protocol):
@@ -139,7 +141,9 @@ class CodingAgent:
         if call.name == "retrieve":
             query = str(call.arguments.get("query", "")).strip()
             if not query:
-                return ToolResult(call_id=call.id, name=call.name, content="query is required", ok=False)
+                return ToolResult(
+                    call_id=call.id, name=call.name, content="query is required", ok=False
+                )
             recovered = await self.policy.recover(query, state, self.budget)  # type: ignore[attr-defined]
             content = "\n\n".join(
                 f"[source={item.source_id} score={item.score:.4f}]\n{item.content}"

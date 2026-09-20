@@ -22,4 +22,3 @@ class ToolResult(BaseModel):
     ok: bool
     duration_seconds: float = 0.0
     metadata: dict[str, Any] = Field(default_factory=dict)
-

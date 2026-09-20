@@ -2,8 +2,7 @@ import pytest
 
 from contextlab.agent.models import AgentState, Message
 from contextlab.config import BudgetConfig
-from contextlab.context.budgeting import TokenBudget
-from contextlab.context.budgeting import ContextOverflow
+from contextlab.context.budgeting import ContextOverflow, TokenBudget
 from contextlab.context.policies.bounded import BoundedToolOutputPolicy
 
 
@@ -26,7 +25,11 @@ def state_with_tool(message: Message) -> AgentState:
 
 @pytest.mark.asyncio
 async def test_error_focused_reduction_preserves_failure() -> None:
-    original = "noise\n" * 100 + "FAILED test_math.py::test_add - AssertionError: 3 != 4\n" + "more\n" * 100
+    original = (
+        "noise\n" * 100
+        + "FAILED test_math.py::test_add - AssertionError: 3 != 4\n"
+        + "more\n" * 100
+    )
     state = state_with_tool(
         Message(role="tool", name="run_command", tool_call_id="c1", content=original)
     )
@@ -71,5 +74,7 @@ async def test_non_tool_overflow_is_not_silently_truncated() -> None:
 @pytest.mark.asyncio
 async def test_bounded_policy_does_not_implicitly_retrieve() -> None:
     state = state_with_tool(Message(role="tool", name="read_file", content="x" * 1000))
-    result = await BoundedToolOutputPolicy().recover("forgotten", state, TokenBudget(BudgetConfig()))
+    result = await BoundedToolOutputPolicy().recover(
+        "forgotten", state, TokenBudget(BudgetConfig())
+    )
     assert result.items == []

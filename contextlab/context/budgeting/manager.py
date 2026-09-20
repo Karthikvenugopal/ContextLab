@@ -76,7 +76,9 @@ class TokenBudget:
             raise ContextOverflow(estimated, self.usable_prompt_tokens)
         return estimated
 
-    def record(self, messages: list[Message], server_reported: int | None = None) -> TokenCountRecord:
+    def record(
+        self, messages: list[Message], server_reported: int | None = None
+    ) -> TokenCountRecord:
         return TokenCountRecord(
             client_estimate=self.count_messages(messages),
             server_reported=server_reported,

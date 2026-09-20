@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from contextlab.agent.models import AgentState
 from contextlab.agent.runtime import CodingAgent
@@ -76,15 +76,18 @@ def mock_inference_for(task: TaskDefinition, policy: str) -> ScriptedInference:
                     "path": "calculator.py",
                     "content": (
                         "def divide(a: float, b: float) -> float:\n"
-                        "    \"\"\"Divide a by b and reject a zero denominator.\"\"\"\n"
+                        '    """Divide a by b and reject a zero denominator."""\n'
                         "    if b == 0:\n"
-                        "        raise ZeroDivisionError(\"cannot divide by zero\")\n"
+                        '        raise ZeroDivisionError("cannot divide by zero")\n'
                         "    return a / b\n"
                     ),
                 },
             },
         },
-        {"action": "tool", "tool": {"name": "run_command", "arguments": {"argv": ["pytest", "-q"]}}},
+        {
+            "action": "tool",
+            "tool": {"name": "run_command", "arguments": {"argv": ["pytest", "-q"]}},
+        },
         {"action": "finish", "summary": "fixed denominator guard and validated visible tests"},
     ]
     return ScriptedInference([json.dumps(item) for item in decisions])
@@ -108,9 +111,7 @@ class ExperimentRunner:
     async def run(self) -> Path:
         output = self.config.output_directory / self.config.experiment_id
         output.mkdir(parents=True, exist_ok=True)
-        (output / "config.json").write_text(
-            self.config.model_dump_json(indent=2), encoding="utf-8"
-        )
+        (output / "config.json").write_text(self.config.model_dump_json(indent=2), encoding="utf-8")
         with tempfile.TemporaryDirectory(prefix="contextlab-baselines-") as temporary:
             baseline_root = Path(temporary)
             for task_path in self.config.tasks:
@@ -161,7 +162,7 @@ class ExperimentRunner:
                     reserved_output_tokens=budget_variant.reserved_output_tokens,
                 ),
                 policy=PolicyConfig(
-                    name=policy_name,  # type: ignore[arg-type]
+                    name=policy_name,
                     deterministic_compaction=self.config.mock,
                 ),
                 allowed_commands=["pytest", "python"],
@@ -238,7 +239,7 @@ class ExperimentRunner:
             )
 
     def ordered_policies(self, *, trial: int, seed: int) -> list[str]:
-        policies = list(self.config.policies)
+        policies: list[str] = list(self.config.policies)
         if self.config.order == "rotate" and policies:
             offset = trial % len(policies)
             return [*policies[offset:], *policies[:offset]]
@@ -250,7 +251,9 @@ class ExperimentRunner:
     def _prepare_baseline(task: TaskDefinition, target: Path) -> tuple[Path, str]:
         shutil.copytree(task.repository, target)
         subprocess.run(["git", "init", "-q", "-b", "main"], cwd=target, check=True)
-        subprocess.run(["git", "config", "user.email", "benchmark@contextlab.local"], cwd=target, check=True)
+        subprocess.run(
+            ["git", "config", "user.email", "benchmark@contextlab.local"], cwd=target, check=True
+        )
         subprocess.run(["git", "config", "user.name", "ContextLab"], cwd=target, check=True)
         subprocess.run(["git", "add", "."], cwd=target, check=True)
         env = {
@@ -258,7 +261,9 @@ class ExperimentRunner:
             "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
             "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z",
         }
-        subprocess.run(["git", "commit", "-qm", "benchmark baseline"], cwd=target, env=env, check=True)
+        subprocess.run(
+            ["git", "commit", "-qm", "benchmark baseline"], cwd=target, env=env, check=True
+        )
         revision = subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=target, capture_output=True, text=True, check=True
         ).stdout.strip()

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 import time
-from pathlib import Path
 
 from contextlab.tools.models import ToolCall, ToolResult
 from contextlab.tools.workspace import RepositoryWorkspace, WorkspaceError
@@ -47,14 +46,20 @@ class RepositoryTools:
             lines = raw.decode("utf-8", errors="replace").splitlines()
             start = max(1, int(call.arguments.get("start_line", 1)))
             end = min(len(lines), int(call.arguments.get("end_line", len(lines))))
-            numbered = "\n".join(f"{number}: {lines[number - 1]}" for number in range(start, end + 1))
+            numbered = "\n".join(
+                f"{number}: {lines[number - 1]}" for number in range(start, end + 1)
+            )
             return ToolResult(
                 call_id=call.id,
                 name=call.name,
                 content=numbered,
                 ok=True,
                 duration_seconds=time.perf_counter() - started,
-                metadata={"path": str(path.relative_to(self.workspace.root)), "start": start, "end": end},
+                metadata={
+                    "path": str(path.relative_to(self.workspace.root)),
+                    "start": start,
+                    "end": end,
+                },
             )
         except (KeyError, OSError, ValueError, WorkspaceError) as error:
             return self._error(call, error, started)
@@ -66,7 +71,11 @@ class RepositoryTools:
             pattern = re.compile(re.escape(query), re.IGNORECASE)
             matches: list[str] = []
             for path in self.workspace.root.rglob("*"):
-                if not path.is_file() or ".git" in path.parts or path.stat().st_size > self.max_read_bytes:
+                if (
+                    not path.is_file()
+                    or ".git" in path.parts
+                    or path.stat().st_size > self.max_read_bytes
+                ):
                     continue
                 for number, line in enumerate(path.read_text(errors="replace").splitlines(), 1):
                     if pattern.search(line):
@@ -81,7 +90,11 @@ class RepositoryTools:
                 content="\n".join(matches),
                 ok=True,
                 duration_seconds=time.perf_counter() - started,
-                metadata={"matches": len(matches), "truncated": len(matches) >= 500, "query": query},
+                metadata={
+                    "matches": len(matches),
+                    "truncated": len(matches) >= 500,
+                    "query": query,
+                },
             )
         except (KeyError, OSError, re.error) as error:
             return self._error(call, error, started)

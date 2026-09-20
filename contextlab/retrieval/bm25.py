@@ -9,12 +9,13 @@ from collections.abc import Iterable
 
 from contextlab.retrieval.index import Document
 
-
 TOKEN_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*|\d+")
 
 
 def tokenize(text: str) -> list[str]:
-    return [match.group(0).lower() for match in TOKEN_PATTERN.finditer(text)]
+    # Preserve identifiers while also making CamelCase searchable as natural words.
+    expanded = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", text)
+    return [match.group(0).lower() for match in TOKEN_PATTERN.finditer(expanded)]
 
 
 class BM25Index:

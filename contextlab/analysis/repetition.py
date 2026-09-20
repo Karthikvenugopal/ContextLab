@@ -63,7 +63,9 @@ def analyze_repeated_access(events: list[AgentEvent]) -> RepeatedAccess:
                 first_step=first_step,
                 repeated_step=event.step,
                 first_call_id=first_id,
-                repeated_call_id=str(tool_result.get("call_id")) if tool_result.get("call_id") else None,
+                repeated_call_id=str(tool_result.get("call_id"))
+                if tool_result.get("call_id")
+                else None,
                 context_loss_supported=supported,
                 attribution="context-removal-associated" if supported else "unattributed",
             )

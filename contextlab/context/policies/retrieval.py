@@ -91,9 +91,7 @@ class RetrievalContextPolicy(BaseContextPolicy):
         )
         return result
 
-    async def prepare_context(
-        self, state: AgentState, budget: TokenBudgetLike
-    ) -> PreparedContext:
+    async def prepare_context(self, state: AgentState, budget: TokenBudgetLike) -> PreparedContext:
         count = len(state.canonical_messages)
         mandatory = list(range(min(2, count)))
         recent_start = max(2, count - self.active_messages)
@@ -106,7 +104,9 @@ class RetrievalContextPolicy(BaseContextPolicy):
                 f"[source={item.source_id} metadata={item.metadata}]\n{item.content}"
                 for item in recovered.items
             )
-            messages.insert(2 if len(messages) >= 2 else len(messages), Message(role="system", content=sources))
+            messages.insert(
+                2 if len(messages) >= 2 else len(messages), Message(role="system", content=sources)
+            )
         estimated = budget.count_messages(messages)
         if estimated > budget.usable_prompt_tokens:
             raise ContextOverflow(estimated, budget.usable_prompt_tokens)

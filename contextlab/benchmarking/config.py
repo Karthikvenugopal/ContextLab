@@ -11,6 +11,10 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from contextlab.config import ModelConfig, PolicyName
 
 
+def all_policies() -> list[PolicyName]:
+    return ["full-history", "bounded-tool-output", "retrieval", "compaction"]
+
+
 class ContextBudgetVariant(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: Literal["short", "medium", "long"]
@@ -22,14 +26,7 @@ class ExperimentConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     experiment_id: str
     tasks: list[Path]
-    policies: list[PolicyName] = Field(
-        default_factory=lambda: [
-            "full-history",
-            "bounded-tool-output",
-            "retrieval",
-            "compaction",
-        ]
-    )
+    policies: list[PolicyName] = Field(default_factory=all_policies)
     budgets: list[ContextBudgetVariant]
     trials: int = Field(default=1, gt=0)
     seeds: list[int] = Field(default_factory=lambda: [0])

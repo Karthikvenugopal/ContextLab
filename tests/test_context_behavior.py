@@ -21,9 +21,7 @@ def test_summarizes_retention_recovery_and_compaction() -> None:
         "compressed_message_indices": [2],
         "recovered_source_ids": ["repo:a"],
         "metadata": {
-            "reductions": [
-                {"original_tokens": 100, "retained_tokens": 20, "discarded_tokens": 80}
-            ]
+            "reductions": [{"original_tokens": 100, "retained_tokens": 20, "discarded_tokens": 80}]
         },
     }
     behavior = analyze_context_behavior(

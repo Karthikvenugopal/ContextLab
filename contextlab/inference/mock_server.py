@@ -13,7 +13,9 @@ class MockHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         if self.path.rstrip("/") == "/v1/models":
-            self._json(200, {"object": "list", "data": [{"id": "contextlab-mock", "object": "model"}]})
+            self._json(
+                200, {"object": "list", "data": [{"id": "contextlab-mock", "object": "model"}]}
+            )
         else:
             self._json(404, {"error": {"message": "not found"}})
 

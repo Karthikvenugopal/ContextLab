@@ -4,7 +4,6 @@ from typer.testing import CliRunner
 
 from contextlab.cli.app import app
 
-
 runner = CliRunner()
 
 

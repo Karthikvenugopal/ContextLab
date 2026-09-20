@@ -17,8 +17,20 @@ def event(kind: EventKind, step: int, **payload: object) -> AgentEvent:
 def test_aggregates_primary_and_context_overhead_metrics() -> None:
     metrics = metrics_from_events(
         [
-            event(EventKind.INFERENCE_RESPONSE, 0, prompt_tokens=10, generated_tokens=2, latency_seconds=0.2),
-            event(EventKind.INFERENCE_RESPONSE, 1, prompt_tokens=20, generated_tokens=3, latency_seconds=0.3),
+            event(
+                EventKind.INFERENCE_RESPONSE,
+                0,
+                prompt_tokens=10,
+                generated_tokens=2,
+                latency_seconds=0.2,
+            ),
+            event(
+                EventKind.INFERENCE_RESPONSE,
+                1,
+                prompt_tokens=20,
+                generated_tokens=3,
+                latency_seconds=0.3,
+            ),
             event(EventKind.CONTEXT_PREPARED, 1, utilization=0.75),
             event(EventKind.COMPACTION, 1, input_tokens=30, output_tokens=5, latency_seconds=0.1),
             event(EventKind.RETRIEVAL, 1, tokens=7, latency_seconds=0.02),

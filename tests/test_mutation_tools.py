@@ -19,7 +19,9 @@ def test_writes_files_and_runs_allowlisted_command(tmp_path: Path) -> None:
 
 def test_rejects_non_allowlisted_and_escaping_writes(tmp_path: Path) -> None:
     tools = MutationTools(RepositoryWorkspace(tmp_path), allowed_commands=["pytest"])
-    assert not tools.run_command(ToolCall(name="run_command", arguments={"argv": ["sh", "-c", "x"]})).ok
+    assert not tools.run_command(
+        ToolCall(name="run_command", arguments={"argv": ["sh", "-c", "x"]})
+    ).ok
     assert not tools.write_file(
         ToolCall(name="write_file", arguments={"path": "../outside", "content": "no"})
     ).ok

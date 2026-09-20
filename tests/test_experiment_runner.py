@@ -18,7 +18,9 @@ async def test_controlled_runner_uses_clean_identical_baselines(tmp_path: Path) 
         output_directory=tmp_path,
     )
     output = await ExperimentRunner(config).run()
-    records = [__import__("json").loads(path.read_text()) for path in (output / "runs").glob("*.json")]
+    records = [
+        __import__("json").loads(path.read_text()) for path in (output / "runs").glob("*.json")
+    ]
     assert len(records) == 2
     assert len({record["baseline_revision"] for record in records}) == 1
     assert all(record["official_evaluation"]["success"] for record in records)

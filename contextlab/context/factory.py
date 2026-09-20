@@ -12,6 +12,7 @@ from contextlab.context.policies import (
 )
 from contextlab.context.policies.compaction import (
     CompactionTriggers,
+    Compactor,
     DeterministicCompactor,
     ModelCompactor,
 )
@@ -35,7 +36,7 @@ def create_policy(
         )
     if config.name == "compaction":
         if config.deterministic_compaction:
-            compactor = DeterministicCompactor()
+            compactor: Compactor = DeterministicCompactor()
         elif inference is not None:
             compactor = ModelCompactor(inference)
         else:

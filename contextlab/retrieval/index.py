@@ -7,7 +7,6 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-
 DEFAULT_EXTENSIONS = {
     ".py",
     ".js",

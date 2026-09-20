@@ -33,10 +33,13 @@ def test_all_compaction_trigger_modes_report_reasons() -> None:
 
 
 def test_trigger_does_not_fire_below_thresholds() -> None:
-    assert CompactionTriggers(every_steps=10).reasons(
-        state=state(1),
-        prompt_tokens=1,
-        usable_tokens=1000,
-        accumulated_tool_tokens=1,
-        last_compaction_step=0,
-    ) == []
+    assert (
+        CompactionTriggers(every_steps=10).reasons(
+            state=state(1),
+            prompt_tokens=1,
+            usable_tokens=1000,
+            accumulated_tool_tokens=1,
+            last_compaction_step=0,
+        )
+        == []
+    )
