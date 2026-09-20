@@ -1,0 +1,2 @@
+"""ContextLab command-line interface."""
+
