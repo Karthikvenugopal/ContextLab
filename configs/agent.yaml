@@ -1,0 +1,17 @@
+model:
+  endpoint: http://127.0.0.1:8000/v1
+  model: Qwen/Qwen2.5-Coder-7B-Instruct
+  temperature: 0.0
+  max_output_tokens: 1024
+limits:
+  max_steps: 20
+  max_model_requests: 20
+  max_tool_calls: 40
+  max_wall_seconds: 900
+budget:
+  context_window: 32768
+  reserved_output_tokens: 2048
+  safety_margin_tokens: 256
+policy:
+  name: full-history
+allowed_commands: [pytest, python, ruff]
