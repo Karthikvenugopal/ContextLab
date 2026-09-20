@@ -58,6 +58,20 @@ class CodingAgent:
             for step in range(self.config.limits.max_steps):
                 state.step = step
                 prepared = await self.policy.prepare_context(state, self.budget)
+                drain = getattr(self.policy, "drain_new_records", None)
+                if callable(drain):
+                    for record in drain():
+                        auxiliary = record.get("inference_response")
+                        if auxiliary is not None:
+                            self.inference_totals.record(auxiliary)
+                        state.emit(
+                            EventKind.COMPACTION,
+                            input_tokens=record["input_tokens"],
+                            output_tokens=record["output_tokens"],
+                            latency_seconds=record["latency_seconds"],
+                            reasons=record["reasons"],
+                            auxiliary_inference=auxiliary is not None,
+                        )
                 event = state.emit(EventKind.CONTEXT_PREPARED, estimated_tokens=prepared.estimated_tokens)
                 await self.policy.observe(event, state)
                 tracker.before_model()

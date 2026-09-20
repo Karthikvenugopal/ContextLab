@@ -135,6 +135,12 @@ class CompactionPolicy(BaseContextPolicy):
         self.compacted_until = 2
         self.last_compaction_step = 0
         self.records: list[dict[str, object]] = []
+        self._reported_records = 0
+
+    def drain_new_records(self) -> list[dict[str, object]]:
+        records = self.records[self._reported_records :]
+        self._reported_records = len(self.records)
+        return records
 
     async def prepare_context(
         self, state: AgentState, budget: TokenBudgetLike
