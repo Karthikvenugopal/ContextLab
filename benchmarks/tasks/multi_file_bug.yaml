@@ -1,0 +1,7 @@
+id: multi-file-pricing
+category: multi_file_bug
+repository: ../fixtures/pricing
+revision: baseline
+description: Correct price totals so the tax rate is applied to the subtotal across pricing and tax modules.
+evaluation_tests: ../evaluation/multi_file_bug
+success_criteria: Totals are correct for CA, OR, and unknown regions.

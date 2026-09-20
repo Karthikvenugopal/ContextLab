@@ -1,0 +1,7 @@
+id: catalog-refactor
+category: refactor
+repository: ../fixtures/catalog
+revision: baseline
+description: Refactor the global catalog into a Catalog class without sharing item state between instances.
+evaluation_tests: ../evaluation/refactor
+success_criteria: Independent Catalog instances support add and names without mutable state leakage.

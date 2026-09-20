@@ -1,0 +1,7 @@
+id: slug-feature
+category: feature
+repository: ../fixtures/slug
+revision: baseline
+description: Implement slugify(text) with lowercase ASCII words separated by single hyphens.
+evaluation_tests: ../evaluation/feature
+success_criteria: Slugs handle whitespace, punctuation, Unicode, and empty input.

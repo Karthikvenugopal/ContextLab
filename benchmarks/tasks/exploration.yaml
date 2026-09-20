@@ -1,0 +1,7 @@
+id: settings-exploration
+category: exploration
+repository: ../fixtures/settings
+revision: baseline
+description: Add CONTEXTLAB_TIMEOUT support with precedence over APP_TIMEOUT and clear invalid-value errors.
+evaluation_tests: ../evaluation/exploration
+success_criteria: Configuration precedence, defaults, and invalid values behave as documented.

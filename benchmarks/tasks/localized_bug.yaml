@@ -1,0 +1,7 @@
+id: localized-divide-zero
+category: localized_bug
+repository: ../fixtures/calculator
+revision: baseline
+description: Fix divide so it rejects a zero denominator while preserving regular division.
+evaluation_tests: ../evaluation/localized_bug
+success_criteria: All isolated tests pass, including numerator-zero and denominator-zero cases.
