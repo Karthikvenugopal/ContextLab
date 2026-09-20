@@ -72,7 +72,13 @@ class CodingAgent:
                             reasons=record["reasons"],
                             auxiliary_inference=auxiliary is not None,
                         )
-                event = state.emit(EventKind.CONTEXT_PREPARED, estimated_tokens=prepared.estimated_tokens)
+                event = state.emit(
+                    EventKind.CONTEXT_PREPARED,
+                    estimated_tokens=prepared.estimated_tokens,
+                    usable_tokens=prepared.usable_tokens,
+                    utilization=prepared.estimated_tokens / max(1, prepared.usable_tokens),
+                    audit=prepared.audit.model_dump(),
+                )
                 await self.policy.observe(event, state)
                 tracker.before_model()
                 response = await self.inference.complete(prepared.messages, seed=seed)
@@ -83,6 +89,7 @@ class CodingAgent:
                     prompt_tokens=response.usage.prompt_tokens,
                     generated_tokens=response.usage.completion_tokens,
                     latency_seconds=response.latency_seconds,
+                    time_to_first_token_seconds=response.time_to_first_token_seconds,
                     request_kind=response.request_kind,
                 )
                 state.canonical_messages.append(Message(role="assistant", content=response.content))
