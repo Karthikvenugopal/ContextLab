@@ -1,0 +1,26 @@
+experiment_id: context-policy-demo
+tasks:
+  - ../benchmarks/tasks/localized_bug.yaml
+policies:
+  - full-history
+  - bounded-tool-output
+  - retrieval
+  - compaction
+budgets:
+  - name: short
+    context_window: 2048
+    reserved_output_tokens: 256
+  - name: medium
+    context_window: 8192
+    reserved_output_tokens: 512
+  - name: long
+    context_window: 32768
+    reserved_output_tokens: 1024
+trials: 1
+seeds: [17]
+order: rotate
+mock: true
+output_directory: ../results
+model:
+  endpoint: http://127.0.0.1:8000/v1
+  model: Qwen/Qwen2.5-Coder-7B-Instruct
