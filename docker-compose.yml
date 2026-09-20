@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+      target: development
     entrypoint: ["python", "-m", "pytest"]
     volumes:
       - .:/workspace
@@ -12,6 +13,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+      target: base
     volumes:
       - ./results:/workspace/results
     profiles: ["agent"]
@@ -20,6 +22,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+      target: development
     command: ["benchmark", "run", "--config", "configs/benchmark.yaml"]
     volumes:
       - ./results:/workspace/results
@@ -29,6 +32,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+      target: base
     entrypoint: ["python", "-m", "contextlab.inference.mock_server", "--host", "0.0.0.0", "--port", "8010"]
     ports: ["8010:8010"]
     profiles: ["dev", "mock"]

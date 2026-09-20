@@ -1,5 +1,4 @@
 import pytest
-
 from settings import load_timeout
 
 

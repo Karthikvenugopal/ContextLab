@@ -110,6 +110,11 @@ class ExperimentRunner:
 
     async def run(self) -> Path:
         output = self.config.output_directory / self.config.experiment_id
+        if output.exists() and any(output.iterdir()):
+            raise FileExistsError(
+                f"experiment output is not empty: {output}; use a new experiment ID "
+                "or archive the existing artifacts"
+            )
         output.mkdir(parents=True, exist_ok=True)
         (output / "config.json").write_text(self.config.model_dump_json(indent=2), encoding="utf-8")
         with tempfile.TemporaryDirectory(prefix="contextlab-baselines-") as temporary:

@@ -1,0 +1,30 @@
+{
+  "generated_at": "2026-09-19",
+  "mode": "cpu-deterministic-mock",
+  "task_id": "localized-divide-zero",
+  "policies": [
+    "full-history",
+    "bounded-tool-output",
+    "retrieval",
+    "compaction"
+  ],
+  "budgets": ["short", "medium", "long"],
+  "runs": 12,
+  "official_successes": 12,
+  "distinct_baseline_revisions": 1,
+  "repository_tool_calls_per_run": 4,
+  "retrieved_tokens_per_retrieval_run": 752,
+  "generated_charts": 7,
+  "median_total_tokens_by_policy": {
+    "full-history": 1651,
+    "bounded-tool-output": 1651,
+    "retrieval": 3447,
+    "compaction": 1651
+  },
+  "python": "3.12.7",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "docker_engine": "29.2.1",
+  "nvidia_gpu_available": false,
+  "real_vllm_executed": false,
+  "interpretation": "Pipeline validation only; not real coding-agent performance."
+}

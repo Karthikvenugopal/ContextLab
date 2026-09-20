@@ -42,3 +42,4 @@ def test_aggregates_primary_and_context_overhead_metrics() -> None:
     assert metrics.total_generated_tokens == 5
     assert metrics.compaction_input_tokens + metrics.compaction_output_tokens == 35
     assert metrics.peak_context_utilization == 0.75
+    assert metrics.retrieval_tokens == 7

@@ -44,3 +44,21 @@ def test_policy_order_rotation_and_seeded_randomization(tmp_path: Path) -> None:
         trial=0, seed=10
     )
     assert sorted(randomized.ordered_policies(trial=0, seed=10)) == sorted(base["policies"])
+
+
+@pytest.mark.asyncio
+async def test_runner_refuses_to_mix_with_existing_artifacts(tmp_path: Path) -> None:
+    occupied = tmp_path / "collision"
+    occupied.mkdir()
+    (occupied / "prior-run.json").write_text("{}")
+    config = ExperimentConfig(
+        experiment_id="collision",
+        tasks=[Path("benchmarks/tasks/localized_bug.yaml").resolve()],
+        policies=["full-history"],
+        budgets=[ContextBudgetVariant(name="short", context_window=2048)],
+        seeds=[1],
+        mock=True,
+        output_directory=tmp_path,
+    )
+    with pytest.raises(FileExistsError, match="not empty"):
+        await ExperimentRunner(config).run()

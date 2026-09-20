@@ -74,6 +74,18 @@ class CodingAgent:
                             reasons=record["reasons"],
                             auxiliary_inference=auxiliary is not None,
                         )
+                retrieval_query = prepared.audit.metadata.get("retrieval_query")
+                if retrieval_query is not None:
+                    state.emit(
+                        EventKind.RETRIEVAL,
+                        query=retrieval_query,
+                        tokens=prepared.audit.metadata.get("retrieval_tokens", 0),
+                        latency_seconds=prepared.audit.metadata.get(
+                            "retrieval_latency_seconds", 0.0
+                        ),
+                        source_ids=prepared.audit.recovered_source_ids,
+                        explicit=False,
+                    )
                 event = state.emit(
                     EventKind.CONTEXT_PREPARED,
                     estimated_tokens=prepared.estimated_tokens,

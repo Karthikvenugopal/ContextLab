@@ -1,0 +1,13 @@
+budget,policy,sample_size,successful_runs,failed_runs,success_rate,total_tokens_median,wall_seconds_median,tool_calls_median
+long,bounded-tool-output,1,1,0,1.0,1651,0.916,4
+long,compaction,1,1,0,1.0,1651,0.950,4
+long,full-history,1,1,0,1.0,1651,0.959,4
+long,retrieval,1,1,0,1.0,3447,0.921,4
+medium,bounded-tool-output,1,1,0,1.0,1651,0.921,4
+medium,compaction,1,1,0,1.0,1651,0.919,4
+medium,full-history,1,1,0,1.0,1651,0.954,4
+medium,retrieval,1,1,0,1.0,3447,0.924,4
+short,bounded-tool-output,1,1,0,1.0,1651,0.945,4
+short,compaction,1,1,0,1.0,1651,0.921,4
+short,full-history,1,1,0,1.0,1651,1.262,4
+short,retrieval,1,1,0,1.0,3447,0.922,4

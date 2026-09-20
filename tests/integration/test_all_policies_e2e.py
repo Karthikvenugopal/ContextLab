@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from contextlab.agent.models import AgentState
+from contextlab.agent.models import AgentState, EventKind
 from contextlab.agent.runtime import CodingAgent
 from contextlab.config import AgentConfig, BudgetConfig, PolicyConfig
 from contextlab.context.budgeting import TokenBudget
@@ -101,3 +101,7 @@ async def test_agent_completes_real_task_under_each_policy(
     assert result.files_modified == {"mathlib.py"}
     assert official.success
     assert inference.requests
+    if policy_name == "retrieval":
+        recovery_events = [event for event in result.events if event.kind == EventKind.RETRIEVAL]
+        assert recovery_events
+        assert all(event.payload["explicit"] is False for event in recovery_events)
