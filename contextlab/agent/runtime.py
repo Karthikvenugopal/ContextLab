@@ -8,6 +8,7 @@ from contextlab.agent.limits import LimitExceeded, LimitTracker
 from contextlab.agent.models import AgentState, EventKind, Message
 from contextlab.agent.protocol import TOOL_PROTOCOL, MalformedDecision, parse_decision
 from contextlab.config import AgentConfig
+from contextlab.context.budgeting import ContextOverflow
 from contextlab.inference.accounting import InferenceTotals
 from contextlab.inference.client import InferenceClient
 from contextlab.tools.execution import MutationTools
@@ -96,6 +97,15 @@ class CodingAgent:
                 )
                 if result.name == "write_file" and result.ok and "path" in result.metadata:
                     state.files_modified.add(str(result.metadata["path"]))
+        except ContextOverflow as error:
+            state.failure = "context_window"
+            state.emit(
+                EventKind.CONTEXT_FAILURE,
+                reason=state.failure,
+                estimated_tokens=error.estimated,
+                usable_tokens=error.usable,
+            )
+            return state
         except LimitExceeded as error:
             state.failure = error.limit
             state.emit(EventKind.STATUS, status="failed", reason=error.limit)

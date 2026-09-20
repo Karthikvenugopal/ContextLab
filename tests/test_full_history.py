@@ -3,6 +3,7 @@ import pytest
 from contextlab.agent.models import AgentState, Message
 from contextlab.config import BudgetConfig
 from contextlab.context.budgeting import TokenBudget
+from contextlab.context.budgeting import ContextOverflow
 from contextlab.context.policies.full_history import FullHistoryPolicy
 
 
@@ -25,3 +26,23 @@ async def test_full_history_preserves_order_and_content() -> None:
     prepared = await FullHistoryPolicy().prepare_context(state, TokenBudget(BudgetConfig()))
     assert [item.content for item in prepared.messages] == ["rules", "task", "large observation"]
     assert prepared.audit.removed_message_indices == []
+
+
+@pytest.mark.asyncio
+async def test_full_history_fails_instead_of_truncating() -> None:
+    state = AgentState(
+        experiment_id="e",
+        run_id="r",
+        task_id="t",
+        policy_id="full-history",
+        system_instruction="s",
+        task_instruction="t",
+        objective="o",
+        canonical_messages=[Message(role="user", content="x" * 1000)],
+    )
+    budget = TokenBudget(
+        BudgetConfig(context_window=100, reserved_output_tokens=20, safety_margin_tokens=10)
+    )
+    with pytest.raises(ContextOverflow):
+        await FullHistoryPolicy().prepare_context(state, budget)
+    assert state.canonical_messages[0].content == "x" * 1000
