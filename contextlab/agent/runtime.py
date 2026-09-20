@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import time
 from typing import Any, Protocol
 
+from contextlab.agent.limits import LimitExceeded, LimitTracker
 from contextlab.agent.models import AgentState, EventKind, Message
 from contextlab.agent.protocol import TOOL_PROTOCOL, MalformedDecision, parse_decision
 from contextlab.config import AgentConfig
@@ -52,44 +52,55 @@ class CodingAgent:
                 Message(role="user", content=state.task_instruction),
             ]
         )
-        started = time.monotonic()
-        for step in range(self.config.limits.max_steps):
-            state.step = step
-            prepared = await self.policy.prepare_context(state, self.budget)
-            event = state.emit(EventKind.CONTEXT_PREPARED, estimated_tokens=prepared.estimated_tokens)
-            await self.policy.observe(event, state)
-            response = await self.inference.complete(prepared.messages, seed=seed)
-            self.inference_totals.record(response)
-            state.emit(
-                EventKind.INFERENCE_RESPONSE,
-                prompt_tokens=response.usage.prompt_tokens,
-                generated_tokens=response.usage.completion_tokens,
-                latency_seconds=response.latency_seconds,
-                request_kind=response.request_kind,
-            )
-            state.canonical_messages.append(Message(role="assistant", content=response.content))
-            try:
-                decision = parse_decision(response.content)
-            except MalformedDecision as error:
-                state.canonical_messages.append(Message(role="user", content=str(error)))
-                continue
-            if decision.action == "finish":
-                state.completed = True
-                state.emit(EventKind.STATUS, status="completed", summary=decision.summary)
-                return state
-            assert decision.tool is not None
-            result = self._execute(decision.tool)
-            self.tool_calls += 1
-            tool_event = state.emit(EventKind.TOOL_RESULT, result=result.model_dump())
-            await self.policy.observe(tool_event, state)
-            state.canonical_messages.append(
-                Message(role="tool", name=result.name, tool_call_id=result.call_id, content=result.content)
-            )
-            if result.name == "write_file" and result.ok and "path" in result.metadata:
-                state.files_modified.add(str(result.metadata["path"]))
-            if time.monotonic() - started > self.config.limits.max_wall_seconds:
-                break
-        state.failure = "execution_limit"
+        tracker = LimitTracker(self.config.limits)
+        try:
+            for step in range(self.config.limits.max_steps):
+                state.step = step
+                prepared = await self.policy.prepare_context(state, self.budget)
+                event = state.emit(EventKind.CONTEXT_PREPARED, estimated_tokens=prepared.estimated_tokens)
+                await self.policy.observe(event, state)
+                tracker.before_model()
+                response = await self.inference.complete(prepared.messages, seed=seed)
+                tracker.after_model(response.usage.completion_tokens)
+                self.inference_totals.record(response)
+                state.emit(
+                    EventKind.INFERENCE_RESPONSE,
+                    prompt_tokens=response.usage.prompt_tokens,
+                    generated_tokens=response.usage.completion_tokens,
+                    latency_seconds=response.latency_seconds,
+                    request_kind=response.request_kind,
+                )
+                state.canonical_messages.append(Message(role="assistant", content=response.content))
+                try:
+                    decision = parse_decision(response.content)
+                except MalformedDecision as error:
+                    state.canonical_messages.append(Message(role="user", content=str(error)))
+                    continue
+                if decision.action == "finish":
+                    state.completed = True
+                    state.emit(EventKind.STATUS, status="completed", summary=decision.summary)
+                    return state
+                assert decision.tool is not None
+                tracker.before_tool()
+                result = self._execute(decision.tool)
+                self.tool_calls += 1
+                tool_event = state.emit(EventKind.TOOL_RESULT, result=result.model_dump())
+                await self.policy.observe(tool_event, state)
+                state.canonical_messages.append(
+                    Message(
+                        role="tool",
+                        name=result.name,
+                        tool_call_id=result.call_id,
+                        content=result.content,
+                    )
+                )
+                if result.name == "write_file" and result.ok and "path" in result.metadata:
+                    state.files_modified.add(str(result.metadata["path"]))
+        except LimitExceeded as error:
+            state.failure = error.limit
+            state.emit(EventKind.STATUS, status="failed", reason=error.limit)
+            return state
+        state.failure = "steps"
         state.emit(EventKind.STATUS, status="failed", reason=state.failure)
         return state
 
