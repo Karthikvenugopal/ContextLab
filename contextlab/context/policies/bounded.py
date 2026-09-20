@@ -36,9 +36,8 @@ class BoundedToolOutputPolicy(BaseContextPolicy):
                 method = "none"
                 retained.append(index)
             elif allowance > 0:
-                content = self._head_tail(original.content, allowance)
+                content, method = self._reduce(original, allowance)
                 retained_tokens = max(1, len(content.encode()) // 4)
-                method = "head-tail"
                 removed.append(index)
             else:
                 content = f"[tool output omitted; call_id={original.tool_call_id or 'unknown'}]"
@@ -78,3 +77,26 @@ class BoundedToolOutputPolicy(BaseContextPolicy):
         remaining = max(2, character_limit - len(marker))
         head = remaining // 2
         return content[:head] + marker + content[-(remaining - head) :]
+
+    def _reduce(self, message: Message, token_limit: int) -> tuple[str, str]:
+        if message.name == "search":
+            lines = message.content.splitlines()
+            retained: list[str] = []
+            for line in lines:
+                candidate = "\n".join([*retained, line])
+                if len(candidate.encode()) // 4 > token_limit:
+                    break
+                retained.append(line)
+            return "\n".join(retained) + "\n...[search results bounded]", "bounded-search-results"
+        if message.name == "run_command":
+            lines = message.content.splitlines()
+            diagnostic = [
+                line
+                for line in lines
+                if any(term in line.lower() for term in ("error", "failed", "failure", "traceback"))
+            ]
+            if diagnostic:
+                focused = "\n".join(diagnostic)
+                if len(focused.encode()) // 4 <= token_limit:
+                    return focused + "\n...[non-error test output omitted]", "error-focused"
+        return self._head_tail(message.content, token_limit), "head-tail"
