@@ -97,7 +97,7 @@ class CodingAgent:
                     return state
                 assert decision.tool is not None
                 tracker.before_tool()
-                result = self._execute(decision.tool)
+                result = await self._execute(decision.tool, state)
                 self.tool_calls += 1
                 tool_event = state.emit(EventKind.TOOL_RESULT, result=result.model_dump())
                 await self.policy.observe(tool_event, state)
@@ -128,7 +128,32 @@ class CodingAgent:
         state.emit(EventKind.STATUS, status="failed", reason=state.failure)
         return state
 
-    def _execute(self, call: ToolCall) -> ToolResult:
+    async def _execute(self, call: ToolCall, state: AgentState) -> ToolResult:
+        if call.name == "retrieve":
+            query = str(call.arguments.get("query", "")).strip()
+            if not query:
+                return ToolResult(call_id=call.id, name=call.name, content="query is required", ok=False)
+            recovered = await self.policy.recover(query, state, self.budget)  # type: ignore[attr-defined]
+            content = "\n\n".join(
+                f"[source={item.source_id} score={item.score:.4f}]\n{item.content}"
+                for item in recovered.items
+            )
+            state.emit(
+                EventKind.RETRIEVAL,
+                query=query,
+                tokens=recovered.tokens,
+                latency_seconds=recovered.latency_seconds,
+                source_ids=[item.source_id for item in recovered.items],
+                explicit=True,
+            )
+            return ToolResult(
+                call_id=call.id,
+                name=call.name,
+                content=content or "no relevant context found",
+                ok=True,
+                duration_seconds=recovered.latency_seconds,
+                metadata={"tokens": recovered.tokens, "sources": len(recovered.items)},
+            )
         dispatch = {
             "list_files": self.repository_tools.list_files,
             "read_file": self.repository_tools.read_file,
