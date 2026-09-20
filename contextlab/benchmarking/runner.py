@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import platform
+import random
 import shutil
 import subprocess
 import tempfile
@@ -40,6 +41,7 @@ class RunRecord(BaseModel):
     budget_name: str
     seed: int
     trial: int
+    execution_index: int
     baseline_revision: str
     model: str
     tokenizer: str
@@ -117,9 +119,19 @@ class ExperimentRunner:
                 for trial in range(self.config.trials):
                     seed = self.config.seeds[trial]
                     for budget in self.config.budgets:
-                        for policy in self.config.policies:
+                        for execution_index, policy in enumerate(
+                            self.ordered_policies(trial=trial, seed=seed)
+                        ):
                             record = await self._run_one(
-                                task, baseline, revision, policy, budget, trial, seed, output
+                                task,
+                                baseline,
+                                revision,
+                                policy,
+                                budget,
+                                trial,
+                                seed,
+                                execution_index,
+                                output,
                             )
                             run_path = output / "runs" / f"{record.run_id}.json"
                             run_path.parent.mkdir(parents=True, exist_ok=True)
@@ -135,6 +147,7 @@ class ExperimentRunner:
         budget_variant: ContextBudgetVariant,
         trial: int,
         seed: int,
+        execution_index: int,
         output: Path,
     ) -> RunRecord:
         run_id = f"{task.id}-{budget_variant.name}-{policy_name}-t{trial}-{uuid4().hex[:8]}"
@@ -203,6 +216,7 @@ class ExperimentRunner:
                 budget_name=budget_variant.name,
                 seed=seed,
                 trial=trial,
+                execution_index=execution_index,
                 baseline_revision=revision,
                 model=self.config.model.model,
                 tokenizer=self.config.model.tokenizer or self.config.model.model,
@@ -222,6 +236,15 @@ class ExperimentRunner:
                 trace=str(trace_path.relative_to(output)),
                 patch=patch,
             )
+
+    def ordered_policies(self, *, trial: int, seed: int) -> list[str]:
+        policies = list(self.config.policies)
+        if self.config.order == "rotate" and policies:
+            offset = trial % len(policies)
+            return [*policies[offset:], *policies[:offset]]
+        if self.config.order == "randomize":
+            random.Random(seed).shuffle(policies)
+        return policies
 
     @staticmethod
     def _prepare_baseline(task: TaskDefinition, target: Path) -> tuple[Path, str]:

@@ -23,3 +23,22 @@ async def test_controlled_runner_uses_clean_identical_baselines(tmp_path: Path) 
     assert len({record["baseline_revision"] for record in records}) == 1
     assert all(record["official_evaluation"]["success"] for record in records)
     assert {record["policy_id"] for record in records} == {"full-history", "bounded-tool-output"}
+
+
+def test_policy_order_rotation_and_seeded_randomization(tmp_path: Path) -> None:
+    base = dict(
+        experiment_id="ordering",
+        tasks=[Path("task.yaml")],
+        policies=["full-history", "bounded-tool-output", "retrieval", "compaction"],
+        budgets=[ContextBudgetVariant(name="short", context_window=2048)],
+        trials=2,
+        seeds=[10, 20],
+        output_directory=tmp_path,
+    )
+    rotating = ExperimentRunner(ExperimentConfig(**base, order="rotate"))
+    assert rotating.ordered_policies(trial=1, seed=20)[0] == "bounded-tool-output"
+    randomized = ExperimentRunner(ExperimentConfig(**base, order="randomize"))
+    assert randomized.ordered_policies(trial=0, seed=10) == randomized.ordered_policies(
+        trial=0, seed=10
+    )
+    assert sorted(randomized.ordered_policies(trial=0, seed=10)) == sorted(base["policies"])
