@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import importlib
 import json
 from pathlib import Path
 from typing import Any
@@ -82,7 +83,8 @@ def _generate_charts(
     directory: Path, rows: list[dict[str, Any]], detailed: list[dict[str, Any]]
 ) -> None:
     try:
-        import matplotlib.pyplot as plt
+        # Keep optional plotting dependencies out of static type traversal.
+        plt = importlib.import_module("matplotlib.pyplot")
     except ImportError as error:
         raise RuntimeError(
             "chart generation requires `pip install contextlab[analysis]`"
