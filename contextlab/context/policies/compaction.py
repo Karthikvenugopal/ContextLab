@@ -7,7 +7,7 @@ from typing import Protocol
 
 from pydantic import BaseModel, Field
 
-from contextlab.agent.models import AgentState, Message
+from contextlab.agent.models import AgentEvent, AgentState, EventKind, Message
 from contextlab.context.base import BaseContextPolicy, ContextAudit, PreparedContext, TokenBudgetLike
 from contextlab.context.budgeting import ContextOverflow
 from contextlab.inference.client import InferenceClient, InferenceResponse
@@ -136,11 +136,25 @@ class CompactionPolicy(BaseContextPolicy):
         self.last_compaction_step = 0
         self.records: list[dict[str, object]] = []
         self._reported_records = 0
+        self.precompaction_paths: set[str] = set()
+        self.revisits: list[dict[str, object]] = []
 
     def drain_new_records(self) -> list[dict[str, object]]:
         records = self.records[self._reported_records :]
         self._reported_records = len(self.records)
         return records
+
+    async def observe(self, event: AgentEvent, state: AgentState) -> None:
+        del state
+        if event.kind != EventKind.TOOL_RESULT or not self.records:
+            return
+        result = event.payload.get("result", {})
+        metadata = result.get("metadata", {}) if isinstance(result, dict) else {}
+        path = metadata.get("path") if isinstance(metadata, dict) else None
+        if path and str(path) in self.precompaction_paths:
+            self.revisits.append(
+                {"path": str(path), "step": event.step, "tool_call_id": result.get("call_id")}
+            )
 
     async def prepare_context(
         self, state: AgentState, budget: TokenBudgetLike
@@ -162,8 +176,18 @@ class CompactionPolicy(BaseContextPolicy):
         compressed: list[int] = []
         if reasons and compactable_end > self.compacted_until:
             compressed = list(range(self.compacted_until, compactable_end))
+            for event in state.events:
+                if event.kind != EventKind.TOOL_RESULT:
+                    continue
+                result_payload = event.payload.get("result", {})
+                metadata = result_payload.get("metadata", {}) if isinstance(result_payload, dict) else {}
+                if isinstance(metadata, dict) and metadata.get("path"):
+                    self.precompaction_paths.add(str(metadata["path"]))
+            compact_input = state.canonical_messages[self.compacted_until : compactable_end]
+            if self.summary:
+                compact_input = [Message(role="system", content=self.summary), *compact_input]
             result = await self.compactor.compact(
-                state.canonical_messages[self.compacted_until : compactable_end], state
+                compact_input, state
             )
             self.summary = result.summary
             self.compacted_until = compactable_end
@@ -196,6 +220,10 @@ class CompactionPolicy(BaseContextPolicy):
                 retained_message_indices=retained_indices,
                 removed_message_indices=list(range(2, self.compacted_until)),
                 compressed_message_indices=compressed,
-                metadata={"compaction_count": len(self.records), "reasons": reasons},
+                metadata={
+                    "compaction_count": len(self.records),
+                    "reasons": reasons,
+                    "revisits": list(self.revisits),
+                },
             ),
         )
