@@ -25,3 +25,20 @@ def test_rejects_non_allowlisted_and_escaping_writes(tmp_path: Path) -> None:
     assert not tools.write_file(
         ToolCall(name="write_file", arguments={"path": "../outside", "content": "no"})
     ).ok
+
+
+def test_command_output_is_resource_bounded(tmp_path: Path) -> None:
+    tools = MutationTools(
+        RepositoryWorkspace(tmp_path),
+        allowed_commands=["python"],
+        command_output_bytes=100,
+    )
+    result = tools.run_command(
+        ToolCall(
+            name="run_command",
+            arguments={"argv": ["python", "-c", "print('x' * 5000)"]},
+        )
+    )
+    assert result.ok
+    assert result.metadata["output_truncated"] is True
+    assert "exceeded byte limit" in result.content

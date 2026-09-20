@@ -30,6 +30,7 @@ class RunMetrics(BaseModel):
     repository_tool_calls: int = 0
     prompt_growth_by_step: dict[int, int] = Field(default_factory=dict)
     time_to_first_token_seconds: list[float] = Field(default_factory=list)
+    inter_token_intervals_seconds: list[float] = Field(default_factory=list)
 
 
 def metrics_from_events(
@@ -50,6 +51,9 @@ def metrics_from_events(
             ttft = payload.get("time_to_first_token_seconds")
             if ttft is not None:
                 metrics.time_to_first_token_seconds.append(float(ttft))
+            metrics.inter_token_intervals_seconds.extend(
+                float(interval) for interval in payload.get("inter_token_intervals_seconds", [])
+            )
             prompt_by_step[event.step] = prompt
         elif event.kind == EventKind.CONTEXT_PREPARED:
             metrics.peak_context_utilization = max(

@@ -184,6 +184,8 @@ class ExperimentRunner:
                     workspace,
                     allowed_commands=agent_config.allowed_commands,
                     command_timeout=agent_config.limits.command_timeout_seconds,
+                    command_memory_mb=agent_config.limits.command_memory_mb,
+                    command_output_bytes=agent_config.limits.command_output_bytes,
                 ),
                 budget=TokenBudget(
                     agent_config.budget,

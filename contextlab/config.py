@@ -33,6 +33,8 @@ class ExecutionLimits(StrictModel):
     max_wall_seconds: float = Field(default=900, gt=0)
     max_generated_tokens: int = Field(default=20_000, gt=0)
     command_timeout_seconds: float = Field(default=120, gt=0)
+    command_memory_mb: int = Field(default=4096, gt=0)
+    command_output_bytes: int = Field(default=2_000_000, gt=0)
 
 
 class BudgetConfig(StrictModel):

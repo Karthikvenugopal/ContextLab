@@ -26,6 +26,7 @@ class InferenceResponse(BaseModel):
     model: str
     latency_seconds: float = 0.0
     time_to_first_token_seconds: float | None = None
+    inter_token_intervals_seconds: list[float] = Field(default_factory=list)
     request_kind: str = "agent"
 
 
@@ -98,6 +99,8 @@ class OpenAIClient:
         }
         started = time.perf_counter()
         first_token: float | None = None
+        previous_chunk_at: float | None = None
+        inter_token_intervals: list[float] = []
         pieces: list[str] = []
         usage = Usage()
         try:
@@ -112,8 +115,12 @@ class OpenAIClient:
                     choices = item.get("choices", [])
                     content = choices[0].get("delta", {}).get("content") if choices else None
                     if content:
+                        arrived_at = time.perf_counter()
                         if first_token is None:
-                            first_token = time.perf_counter() - started
+                            first_token = arrived_at - started
+                        elif previous_chunk_at is not None:
+                            inter_token_intervals.append(arrived_at - previous_chunk_at)
+                        previous_chunk_at = arrived_at
                         pieces.append(content)
         except (httpx.HTTPError, json.JSONDecodeError) as error:
             raise InferenceError(f"streaming inference failed: {error}") from error
@@ -123,6 +130,7 @@ class OpenAIClient:
             model=self.config.model,
             latency_seconds=time.perf_counter() - started,
             time_to_first_token_seconds=first_token,
+            inter_token_intervals_seconds=inter_token_intervals,
             request_kind=request_kind,
         )
 

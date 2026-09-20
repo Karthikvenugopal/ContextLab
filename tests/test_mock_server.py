@@ -25,6 +25,7 @@ async def test_mock_endpoint_supports_regular_and_streamed_openai_responses() ->
         assert '"action": "finish"' in regular.content
         assert streamed.content == regular.content
         assert streamed.usage.total_tokens > 0
+        assert len(streamed.inter_token_intervals_seconds) == 1
     finally:
         await client.aclose()
         server.shutdown()

@@ -104,6 +104,7 @@ class CodingAgent:
                     generated_tokens=response.usage.completion_tokens,
                     latency_seconds=response.latency_seconds,
                     time_to_first_token_seconds=response.time_to_first_token_seconds,
+                    inter_token_intervals_seconds=response.inter_token_intervals_seconds,
                     request_kind=response.request_kind,
                 )
                 state.canonical_messages.append(Message(role="assistant", content=response.content))

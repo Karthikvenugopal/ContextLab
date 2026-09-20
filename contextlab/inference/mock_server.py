@@ -39,12 +39,15 @@ class MockHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream")
             self.end_headers()
+            midpoint = len(content) // 2
             chunks: list[dict[str, Any]] = [
                 {
                     "id": "mock",
                     "model": "contextlab-mock",
-                    "choices": [{"delta": {"content": content}, "index": 0}],
-                },
+                    "choices": [{"delta": {"content": piece}, "index": 0}],
+                }
+                for piece in (content[:midpoint], content[midpoint:])
+            ] + [
                 {
                     "id": "mock",
                     "model": "contextlab-mock",
